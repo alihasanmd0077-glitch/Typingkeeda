@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Typing Keeda</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #f4f6ff;
+      --card: #ffffff;
+      --text: #222;
+      --primary: #4f46e5;
+      --accent: #22c55e;
+    }
+
+    body.dark {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e5e7eb;
+      --primary: #38bdf8;
+      --accent: #22c55e;
+    }
+
+    body.neon {
+      --bg: #000000;
+      --card: #111111;
+      --text: #ffffff;
+      --primary: #ff00ff;
+      --accent: #00ffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .app {
+      max-width: 700px;
+      width: 100%;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      color: var(--primary);
+      margin: 0;
+    }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    .quote {
+      margin: 20px 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .quote span.correct {
+      color: var(--accent);
+    }
+
+    .quote span.incorrect {
+      color: red;
+      text-decoration: underline;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 2px solid var(--primary);
+      outline: none;
+      resize: none;
+      margin-top: 10px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+      font-size: 0.9rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .footer strong {
+      color: var(--primary);
+    }
+
+    @media (max-width: 500px) {
+      .quote {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+  <header>
+    <h1>Typing Keeda 🐞</h1>
+    <select id="theme">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="neon">Neon</option>
+    </select>
+  </header>
+
+  <div class="quote" id="quote"></div>
+
+  <textarea id="input" placeholder="Start typing here..."></textarea>
+
+  <div class="stats">
+    <div>⏱ Time: <span id="time">60</span>s</div>
+    <div>⚡ WPM: <span id="wpm">0</span></div>
+    <div>🎯 Accuracy: <span id="accuracy">100</span>%</div>
+  </div>
+
+  <button onclick="resetTest()">Restart</button>
+
+  <footer class="footer">
+    Created by <strong>ALI HASAN</strong> 
+  </footer>
+</div>
+
+<script>
+  const quotes = [
+    "Self-discover and clarify your deeply important character values and life goals. Envision the ideal characteristics for each of your various roles and relationships in life.",
+    "Let the world rush without you. You are allowed to move slowly, to feel deeply without apology, to rest without earning it, to grow without explaining it, to change without permission, to exist exactly as you are.",
+    "There were days you almost stopped, moments where quitting felt merciful, hours that stretched heavier than hope. Still, you breathed through the weight, still you stood when no one watched, still you chose tomorrow—and that choice became your strength.",
+    "You are not late to your life; you are arriving with understanding, with scars that know how to heal, with patience borrowed from pain, with dreams that survived silence, with courage that learned to whisper, and a heart still willing to begin.",
+    "Some people bloom in sunlight, others learn in the rain. Neither path is lesser, neither story is wrong. What matters is the becoming—the way you keep unfolding, even when seasons are unkind."
+  ];
+
+  const quoteEl = document.getElementById("quote");
+  const inputEl = document.getElementById("input");
+  const timeEl = document.getElementById("time");
+  const wpmEl = document.getElementById("wpm");
+  const accuracyEl = document.getElementById("accuracy");
+  const themeSelect = document.getElementById("theme");
+
+  let time = 60;
+  let timer = null;
+  let currentQuote = "";
+
+  function loadQuote() {
+    currentQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    quoteEl.innerHTML = "";
+    currentQuote.split("").forEach(char => {
+      const span = document.createElement("span");
+      span.innerText = char;
+      quoteEl.appendChild(span);
+    });
+  }
+
+  inputEl.addEventListener("input", () => {
+    if (!timer) startTimer();
+
+    const chars = quoteEl.querySelectorAll("span");
+    const input = inputEl.value.split("");
+    let correct = 0;
+
+    chars.forEach((char, index) => {
+      if (input[index] == null) {
+        char.className = "";
+      } else if (input[index] === char.innerText) {
+        char.className = "correct";
+        correct++;
+      } else {
+        char.className = "incorrect";
+      }
+    });
+
+    const accuracy = Math.round((correct / input.length) * 100) || 100;
+    accuracyEl.innerText = accuracy;
+  });
+
+  function startTimer() {
+    timer = setInterval(() => {
+      time--;
+      timeEl.innerText = time;
+
+      if (time === 0) {
+        clearInterval(timer);
+        const words = inputEl.value.trim().split(" ").length;
+        wpmEl.innerText = words;
+        inputEl.disabled = true;
+      }
+    }, 1000);
+  }
+
+  function resetTest() {
+    clearInterval(timer);
+    timer = null;
+    time = 60;
+    inputEl.value = "";
+    inputEl.disabled = false;
+    timeEl.innerText = 60;
+    wpmEl.innerText = 0;
+    accuracyEl.innerText = 100;
+    loadQuote();
+  }
+
+  themeSelect.addEventListener("change", () => {
+    document.body.className =
+      themeSelect.value === "light" ? "" : themeSelect.value;
+  });
+
+  loadQuote();
+</script>
+
+</body>
+</html>
